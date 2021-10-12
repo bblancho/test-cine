@@ -1,0 +1,285 @@
+{% extends 'base.html.twig' %}
+{% block title %}TEST WE CINE{% endblock %}
+{% block extrastylesheets %}
+    <style>
+        @import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css);
+        .startchecked {
+            color: orange;
+        }
+        .grabbing {
+            cursor: -webkit-grabbing;
+            cursor: grabbing;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+    <div class="container">
+
+        <div class="py-5 text-center">
+            <div class="d-flex justify-content-between bd-highlight mb-3">
+                <div class="p-2 bd-highlight"><h1>A propos We Movies</h1></div>
+
+                <div class="p-2 bd-highlight">
+                    <form class="card p-2" id="search" method="post">
+                        <div class="input-group">
+                            <input type="text" name="moviename" id="moviename" class="form-control" placeholder="Movie Name">
+                            <div class="input-group-append">
+                                <button id="btn_search" class="btn btn-secondary"><span>Search</span></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="bd-example bd-example-images">
+            <img class="img-thumbnail videomodal" alt="200x200" src="{{ imag_base_url~latestMovie.poster_path }}"
+                 data-holder-rendered="true" style="width: 200px; height: 200px;">
+        </div>
+
+
+        {# la liste #}
+        <div class="row">
+            {# les categorie #}
+            <div class="col-md-4 order-md-1 mb-4">
+                <h4 class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Your cart</span>
+                    <span class="badge badge-secondary badge-pill">3</span>
+                </h4>
+               <form>
+                   {% for genre in genres %}
+                       <div class="input-group-prepend">
+                           <div class="input-group-text">
+                               <input class="videogenrefilter" data-id="{{ genre.id }}"  type="checkbox" value="{{ genre.id }}" aria-label="Checkbox for following text input">
+                               <span class="text">  {{ genre.name|capitalize }}</span>
+                           </div>
+                       </div>
+                   {% endfor %}
+
+               </form>
+            </div>
+
+            {# la liste #}
+            <div class="col-md-8 order-md-2">
+                <h4 class="mb-3">List movies</h4>
+                <div class="d-flex flex-column" id="listvideos">
+                    {% for popularvideo in popularvideos %}
+                        <div class="p-2">
+                            <div class="card flex-md-row mb-4 box-shadow h-md-250">
+                                <img  class="card-img-left flex-auto d-none d-md-block videomodal  grabbing"
+                                     src="{{ imag_base_url~popularvideo.poster_path }}"  alt="Thumbnail [200x250]" src=""
+                                     data-holder-rendered="true" style="width: 200px; height: 250px;">
+
+                                <div class="card-body d-flex flex-column align-items-start">
+                                    <div class="d-flex justify-content-start bd-highlight mb-3">
+                                        <div class="p-2 bd-highlight">{{ popularvideo.title }}</div>
+                                        {% for i in 0..popularvideo.vote_average %}
+                                            <div class="p-2 bd-highlight"><span class="fa fa-star startchecked"></span></div>
+                                        {% endfor %}
+                                        {% for i in 0..(popularvideo.vote_average-10) %}
+                                            <div class="p-2 bd-highlight"><span class="fa fa-star "></span></div>
+                                        {% endfor %}
+                                        <div class="p-2 bd-highlight">({{ popularvideo.vote_count }})</div>
+                                    </div>
+
+                                    <div class="mb-1 text-muted">{{ popularvideo.release_date|date('Y') }}</div>
+                                    <p class="card-text mb-auto">{{ popularvideo.overview }}</p>
+                                    <a class="btn btn-primary btn-sm " href="#">Continue reading</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel" id="modvideotitle"></h5>
+                        <button id="modaleclose" type="button" class="close btn btn-secondary" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="modvideocontent">
+
+                    </div>
+                    <div class="modal-footer">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="my-5 pt-5 text-muted text-center text-small">
+            <p class="mb-1">&copy; 2017-2018 Company Name</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="#">Privacy</a></li>
+                <li class="list-inline-item"><a href="#">Terms</a></li>
+                <li class="list-inline-item"><a href="#">Support</a></li>
+            </ul>
+        </footer>
+    </div>
+{% endblock %}
+{% block extrajavascript %}
+
+    <script type="text/javascript">
+
+
+
+
+        $(document).ready(function() {
+            var listvideos = $('#listvideos')
+            // $('[data-toggle="popover"]').popover();
+            $("#search").submit(function(e){
+
+                $('#btn_search').html('<i class="fa fa-spinner fa-spin"></i>' )
+                e.preventDefault(e);
+
+
+                var moviename = $('#moviename');
+
+                var data = new FormData();
+
+                data.append('moviename',moviename.val());
+
+                $.ajax({
+                    url: "{{ path('searchbymoviename') }}",
+                    type: "POST",
+                    data: data,
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    beforeSend:function () {
+                        listvideos.html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>' )
+
+                    },
+                    success:function (data) {
+                        console.log(data.data.results)
+                        listvideos.html(' ' )
+                        for (var i in data.data.results) {
+                            var datahtml = '';
+                            // console.log(i + ' -> ' + data.data.results[i]); // i is the index/key, not the item
+                             datahtml +=' ' +
+                                '<div class="p-2"> ' +
+                                '<div class="card flex-md-row mb-4 box-shadow h-md-250"> ' +
+                                '<img class="card-img-left flex-auto d-none d-md-block videomodal  grabbing" src="{{ imag_base_url}}'+data.data.results[i].poster_path+'" alt="Thumbnail [200x250]" src=""data-holder-rendered="true" style="width: 200px; height: 250px;">' +
+                            '<div class="card-body d-flex flex-column align-items-start">' +
+                            '<div class="d-flex justify-content-start bd-highlight mb-3"> <div class="p-2 bd-highlight">'
+                           +data.data.results[i].title+
+                            '</div>';
+                            for (var v = 0; v <= data.data.results[i].vote_average; v++){
+                                datahtml +='<div class="p-2 bd-highlight"><span class="fa fa-star startchecked"></span></div>'
+                            }
+                            for (var v2 = 0; v2 <= (data.data.results[i].vote_average-10); v2++){
+                                datahtml +='<div class="p-2 bd-highlight"><span class="fa fa-star "></span></div>';
+                            }
+
+                            datahtml += '<div class="p-2 bd-highlight">('+data.data.results[i].vote_count+')</div>';
+                            datahtml += '</div> <div class="mb-1 text-muted">'+data.data.results[i].release_date+'</div>' +
+                                ' <p class="card-text mb-auto">'+data.data.results[i].overview+'</p> ' +
+                                '<a class="btn btn-primary btn-sm " href="#">Continue reading</a> </div> </div> </div>';
+                            listvideos.append(datahtml);
+                        }
+                        $('#btn_search').html('<span>Search</span>' )
+                    },
+                    complete:function () {
+                        $('#btn_search').html('<span>Search</span>' )
+
+                    },
+                    error:function () {
+                        $('#btn_search').html('<span>Search</span>' )
+                    }
+                });
+                return false;
+            });
+
+
+            $(".videogenrefilter").on('change',function(){
+                var array_genre = []
+                $('input[type=checkbox]').each(function () {
+                    var sThisVal = (this.checked ? $(this).val() : "");
+                    if (this.checked){
+                        array_genre.push($(this).val())
+                    }
+                });
+                $('#btn_search').html('<i class="fa fa-spinner fa-spin"></i>' )
+
+
+
+                var data = new FormData();
+
+                data.append('array_genre', array_genre);
+
+                $.ajax({
+                    url: "{{ path('searchbygenre') }}",
+                    type: "POST",
+                    data: data,
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    beforeSend:function () {
+                        listvideos.html('<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>' )
+
+                    },
+                    success:function (data) {
+                        console.log(data)
+                        listvideos.html(' ' )
+                        for (var i in data.data) {
+                            var datahtml = '';
+                            // console.log(i + ' -> ' + data.data[i]); // i is the index/key, not the item
+                             datahtml +=' ' +
+                                '<div class="p-2"> ' +
+                                '<div class="card flex-md-row mb-4 box-shadow h-md-250"> ' +
+                                '<img class="card-img-left flex-auto d-none d-md-block videomodal  grabbing" src="{{ imag_base_url}}'+data.data[i].poster_path+'" alt="Thumbnail [200x250]" src=""data-holder-rendered="true" style="width: 200px; height: 250px;">' +
+                            '<div class="card-body d-flex flex-column align-items-start">' +
+                            '<div class="d-flex justify-content-start bd-highlight mb-3"> <div class="p-2 bd-highlight">'
+                           +data.data[i].title+
+                            '</div>';
+                            for (var v = 0; v <= data.data[i].vote_average; v++){
+                                datahtml +='<div class="p-2 bd-highlight"><span class="fa fa-star startchecked"></span></div>'
+                            }
+                            for (var v2 = 0; v2 <= (data.data[i].vote_average-10); v2++){
+                                datahtml +='<div class="p-2 bd-highlight"><span class="fa fa-star "></span></div>';
+                            }
+
+                            datahtml += '<div class="p-2 bd-highlight">('+data.data[i].vote_count+')</div>';
+                            datahtml += '</div> <div class="mb-1 text-muted">'+data.data[i].release_date+'</div>' +
+                                ' <p class="card-text mb-auto">'+data.data[i].overview+'</p> ' +
+                                '<a class="btn btn-primary btn-sm " href="#">Continue reading</a> </div> </div> </div>';
+                            listvideos.append(datahtml);
+                        }
+                        $('#btn_search').html('<span>Search</span>' )
+                    },
+                    complete:function () {
+                        $('#btn_search').html('<span>Search</span>' )
+
+                    },
+                    error:function () {
+                        $('#btn_search').html('<span>Search</span>' )
+                    }
+                });
+                return false;
+            });
+
+
+        });
+
+        $(document).on ("click", ".videomodal", function () {
+            console.log('mlkml')
+            $('#exampleModal').modal('show')
+            var imgurl = $(this).attr('src');
+            var modvideocontent = $('#modvideocontent')
+
+
+            modvideocontent.html('<img src="'+imgurl+'" />' )
+        });
+
+        $(document).on ("click", "#modaleclose", function () {
+            $('#exampleModal').modal('hide')
+        });
+    </script>
+{% endblock %}
